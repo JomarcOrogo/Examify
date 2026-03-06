@@ -17,7 +17,7 @@ class ClassroomController extends Controller
         if ($user->role === 'teacher') {
             $classrooms = $request->user()->classrooms()->withCount('students')->get();
         } else {
-            $classrooms = $request->user()->enrolledClassrooms()->with('teacher:id,name')->get();
+            $classrooms = $request->user()->enrolledClassrooms()->with('teacher:id,name,email,teacher_id')->get();
         }
 
         return response()->json($classrooms, 200);
@@ -30,7 +30,7 @@ class ClassroomController extends Controller
 
         // Authorization: Teacher of the class or Enrolled student
         $isTeacher = $classroom->teacher_id === $user->id;
-        $isStudent = $classroom->students()->where('student_id', $user->id)->exists();
+        $isStudent = $classroom->students()->where('users.id', $user->id)->exists();
 
         if (!$isTeacher && !$isStudent) {
             abort(403);
@@ -72,7 +72,7 @@ class ClassroomController extends Controller
             return response()->json(['message' => 'Invalid join code'], 400);
         }
 
-        if ($classroom->students()->where('student_id', $request->user()->id)->exists()) {
+        if ($classroom->students()->where('users.id', $request->user()->id)->exists()) {
             return response()->json(['message' => 'Already joined'], 409);
         }
 
@@ -93,11 +93,13 @@ class ClassroomController extends Controller
             return response()->json(['message' => 'Invalid join code'], 404);
         }
 
-        if ($classroom->students()->where('student_id', $request->user()->id)->exists()) {
+        if ($classroom->students()->where('users.id', $request->user()->id)->exists()) {
             return response()->json(['message' => 'Already joined'], 409);
         }
 
         $classroom->students()->attach($request->user()->id);
+
+        $classroom->load('teacher:id,name,email,teacher_id');
 
         return response()->json(['message' => 'Joined successfully', 'classroom' => $classroom], 200);
     }
@@ -109,13 +111,42 @@ class ClassroomController extends Controller
 
         // Authorization: Teacher of the class or Enrolled student
         $isTeacher = $classroom->teacher_id === $user->id;
-        $isStudent = $classroom->students()->where('student_id', $user->id)->exists();
+        $isStudent = $classroom->students()->where('users.id', $user->id)->exists();
 
         if (!$isTeacher && !$isStudent) {
             abort(403);
         }
 
-        return response()->json($classroom->students()->select('users.id', 'users.name', 'users.email', 'users.role')->get(), 200);
+        return response()->json($classroom->students()->select('users.id', 'users.name', 'users.email', 'users.role', 'users.student_id', 'users.section')->get(), 200);
+    }
+
+    public function gradebook($id)
+    {
+        $classroom = Classroom::findOrFail($id);
+        $students = $classroom->students()->get();
+        $calcService = new \App\Services\GradeCalculationService();
+
+        $gradebook = $students->map(function ($student) use ($classroom, $calcService) {
+            $grade = $calcService->calculateWeightedAverage($classroom, $student);
+
+            $scores = [];
+            foreach ($classroom->assessments as $assessment) {
+                $attempt = $student->attempts()->where('assessment_id', $assessment->id)->where('status', 'submitted')->first();
+                $scores[$assessment->title] = $attempt ? (double) $attempt->score : 0.0;
+            }
+
+            return [
+                'id' => $student->id,
+                'student_id' => $student->student_id ?? 'N/A',
+                'name' => $student->name,
+                'email' => $student->email,
+                'section' => $student->section ?? 'N/A',
+                'scores' => $scores,
+                'calculated_grade' => round((double) $grade, 1),
+            ];
+        });
+
+        return response()->json($gradebook);
     }
 
     public function update(Request $request, $id)

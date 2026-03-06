@@ -20,7 +20,7 @@ class AssessmentController extends Controller
 
         $query = $classroom->assessments();
         if ($user->role === 'student') {
-            if (!$classroom->students()->where('student_id', $user->id)->exists())
+            if (!$classroom->students()->where('users.id', $user->id)->exists())
                 abort(403);
             $query->where('is_published', true);
         } else {
@@ -45,6 +45,8 @@ class AssessmentController extends Controller
             'warn_at_violations' => 'sometimes|integer',
             'questions' => 'required|array',
             'questions.*.body' => 'required|string',
+            'questions.*.type' => 'sometimes|string',
+            'questions.*.points' => 'sometimes|integer',
             'questions.*.options' => 'required|array|min:2',
             'questions.*.options.*.body' => 'required|string',
             'questions.*.options.*.is_correct' => 'required|boolean',
@@ -65,6 +67,8 @@ class AssessmentController extends Controller
             foreach ($validated['questions'] as $qIndex => $qData) {
                 $question = $assessment->questions()->create([
                     'body' => $qData['body'],
+                    'type' => $qData['type'] ?? 'multiple_choice',
+                    'points' => $qData['points'] ?? 1,
                     'order' => $qIndex,
                 ]);
 
@@ -117,7 +121,7 @@ class AssessmentController extends Controller
         $user = $request->user();
 
         $consent = ExamConsent::where('assessment_id', $assessment->id)
-            ->where('student_id', $user->id)
+            ->where('exam_consents.student_id', $user->id)
             ->first();
 
         if (!$consent) {
@@ -125,7 +129,7 @@ class AssessmentController extends Controller
         }
 
         $existingAttempt = StudentAttempt::where('assessment_id', $assessment->id)
-            ->where('student_id', $user->id)
+            ->where('student_attempts.student_id', $user->id)
             ->where('status', 'in_progress')
             ->first();
 
@@ -144,5 +148,18 @@ class AssessmentController extends Controller
             'attempt_id' => $attempt->id,
             'started_at' => $attempt->started_at->toIso8601String()
         ], 201);
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        $assessment = Assessment::findOrFail($id);
+
+        if ($assessment->classroom->teacher_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $assessment->delete();
+
+        return response()->json(['message' => 'Assessment deleted successfully'], 200);
     }
 }

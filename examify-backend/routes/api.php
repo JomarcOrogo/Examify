@@ -9,6 +9,9 @@ use App\Http\Controllers\Api\AnnouncementController;
 
 use App\Http\Controllers\Api\AssessmentController;
 use App\Http\Controllers\Api\StudentAttemptController;
+use App\Http\Controllers\Api\BulkUploadController;
+use App\Http\Controllers\Api\AnalyticsController;
+use App\Http\Controllers\Api\AssessmentTemplateController;
 
 // Public Routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -43,6 +46,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/classrooms/{id}/assessments', [AssessmentController::class, 'index']);
     Route::post('/classrooms/{id}/assessments', [AssessmentController::class, 'store'])->middleware('teacher');
     Route::get('/assessments/{id}', [AssessmentController::class, 'show']);
+    Route::delete('/assessments/{id}', [AssessmentController::class, 'destroy'])->middleware('teacher');
     Route::post('/assessments/{id}/consent', [AssessmentController::class, 'consent'])->middleware('student');
     Route::post('/assessments/{id}/start', [AssessmentController::class, 'start'])->middleware('student');
 
@@ -54,4 +58,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/attempts/{id}/result', [\App\Http\Controllers\Api\ResultController::class, 'studentResult'])->middleware('student');
     Route::get('/assessments/{id}/results', [\App\Http\Controllers\Api\ResultController::class, 'teacherResults'])->middleware('teacher');
     Route::get('/assessments/{id}/proctoring-report', [\App\Http\Controllers\Api\ResultController::class, 'proctoringReport'])->middleware('teacher');
+
+    // Teacher Essentials
+    Route::post('/students/bulk-upload', [BulkUploadController::class, 'upload'])->middleware('teacher');
+    Route::get('/classrooms/{id}/gradebook', [ClassroomController::class, 'gradebook'])->middleware('teacher');
+    Route::get('/analytics/exam/{id}', [AnalyticsController::class, 'getExamAnalytics'])->middleware('teacher');
+    Route::get('/assessment-templates', [AssessmentTemplateController::class, 'index'])->middleware('teacher');
 });

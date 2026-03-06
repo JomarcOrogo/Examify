@@ -3,12 +3,17 @@ import '../../core/api/api_client.dart';
 import '../models/classroom.dart';
 import '../models/announcement.dart';
 import '../models/user.dart';
+import 'auth_provider.dart';
 
 // Use Simple Providers until Riverpod 3.0 Notifier syntax is confirmed
 // FutureProvider is safest for read-only / basic fetching
 
 // Classrooms List
 final classroomsProvider = FutureProvider<List<Classroom>>((ref) async {
+  // Watch auth state to ensure we re-fetch when user changes
+  final authState = ref.watch(authProvider);
+  if (!authState.isAuthenticated) return [];
+
   final response = await ref.read(apiClientProvider).get('/classrooms');
   final List<dynamic> data = response.data;
   return data.map((json) => Classroom.fromJson(json)).toList();
@@ -19,6 +24,7 @@ final classroomDetailProvider = FutureProvider.family<Classroom, String>((
   ref,
   id,
 ) async {
+  ref.watch(authProvider);
   final response = await ref.read(apiClientProvider).get('/classrooms/$id');
   return Classroom.fromJson(response.data);
 });
@@ -28,6 +34,7 @@ final classroomStudentsProvider = FutureProvider.family<List<User>, String>((
   ref,
   id,
 ) async {
+  ref.watch(authProvider);
   final response = await ref
       .read(apiClientProvider)
       .get('/classrooms/$id/students');
@@ -38,6 +45,7 @@ final classroomStudentsProvider = FutureProvider.family<List<User>, String>((
 // Announcements
 final announcementsProvider = FutureProvider.family<List<Announcement>, String>(
   (ref, id) async {
+    ref.watch(authProvider);
     final response = await ref
         .read(apiClientProvider)
         .get('/classrooms/$id/announcements');

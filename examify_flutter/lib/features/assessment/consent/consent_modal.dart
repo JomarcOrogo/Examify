@@ -1,26 +1,49 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/widgets/app_button.dart';
+import '../../../core/api/api_client.dart';
 
-class ConsentModal extends StatefulWidget {
+class ConsentModal extends ConsumerStatefulWidget {
   final String assessmentId;
   const ConsentModal({super.key, required this.assessmentId});
 
   @override
-  State<ConsentModal> createState() => _ConsentModalState();
+  ConsumerState<ConsentModal> createState() => _ConsentModalState();
 }
 
-class _ConsentModalState extends State<ConsentModal> {
+class _ConsentModalState extends ConsumerState<ConsentModal> {
   bool _agreed = false;
   bool _isLoading = false;
 
   void _startExam() async {
     setState(() => _isLoading = true);
-    // TODO: API call to record consent
-    await Future.delayed(const Duration(milliseconds: 500));
-    setState(() => _isLoading = false);
-    if (!mounted) return;
-    context.pushReplacement('/assessment/${widget.assessmentId}/take');
+
+    try {
+      final dio = ref.read(apiClientProvider);
+
+      // 1. Record Consent
+      await dio.post('/assessments/${widget.assessmentId}/consent');
+
+      // 2. Start Attempt
+      final response = await dio.post(
+        '/assessments/${widget.assessmentId}/start',
+      );
+      final attemptId = response.data['attempt_id'];
+
+      if (!mounted) return;
+      context.pushReplacement(
+        '/assessment/${widget.assessmentId}/take?attemptId=$attemptId',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to start exam: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

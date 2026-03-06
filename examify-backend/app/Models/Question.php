@@ -11,7 +11,9 @@ class Question extends Model
 
     protected $fillable = [
         'assessment_id',
+        'type',
         'body',
+        'points',
         'order',
     ];
 

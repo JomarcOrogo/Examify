@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
+
 import 'package:intl/intl.dart';
 import '../../shared/providers/auth_provider.dart';
 import '../../shared/widgets/app_card.dart';
@@ -38,10 +38,10 @@ class StreamTab extends ConsumerWidget {
                   // Left Column: Meet & Upcoming (Desktop/Tablet)
                   if (MediaQuery.of(context).size.width > 800)
                     SizedBox(
-                      width: 250,
+                      width: 200,
                       child: Column(
                         children: [
-                          _buildMeetCard(context, isTeacher),
+                          _buildClassCodeCard(context, classroom),
                           const SizedBox(height: 16),
                           _buildUpcomingCard(context),
                         ],
@@ -90,49 +90,104 @@ class StreamTab extends ConsumerWidget {
   ) {
     return Container(
       width: double.infinity,
-      height: 200,
+      height: 240,
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.primary,
-        borderRadius: BorderRadius.circular(12),
-        image: DecorationImage(
-          image: const AssetImage('assets/classroom_banner_it312.png'),
+        borderRadius: BorderRadius.circular(8),
+        image: const DecorationImage(
+          image: AssetImage('assets/classroom_banner_it312.png'),
           fit: BoxFit.cover,
-          onError: (exception, stackTrace) => {},
         ),
       ),
-      padding: const EdgeInsets.all(24),
       child: Stack(
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              Text(
-                classroom.name,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+          // Darken overlay
+          Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.transparent, Colors.black.withOpacity(0.6)],
               ),
-              if (classroom.description != null)
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
                 Text(
-                  classroom.description!,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.titleMedium?.copyWith(color: Colors.white70),
+                  classroom.name,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 32,
+                  ),
                 ),
-            ],
+                if (classroom.description != null)
+                  Text(
+                    classroom.description!,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+              ],
+            ),
           ),
           if (isTeacher)
             Positioned(
-              top: 0,
-              right: 0,
-              child: IconButton(
-                icon: const Icon(Icons.edit, color: Colors.white),
+              bottom: 16,
+              right: 16,
+              child: ElevatedButton.icon(
                 onPressed: () =>
                     _showEditClassroomDialog(context, classroom, ref),
+                icon: const Icon(Icons.edit, size: 18),
+                label: const Text('Customize'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
               ),
             ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildClassCodeCard(BuildContext context, Classroom classroom) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Class code',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Text(
+                classroom.joinCode,
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 22,
+                  letterSpacing: 1.2,
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: const Icon(Icons.fullscreen, size: 20),
+                onPressed: () {},
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -189,56 +244,6 @@ class StreamTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildMeetCard(BuildContext context, bool isTeacher) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Image.network(
-                'https://www.gstatic.com/meet/google_meet_primary_horizontal_2020q4_logo_be3f850c950486c9da5eb65dd07165.png',
-                height: 20,
-              ),
-              const Spacer(),
-              if (isTeacher)
-                PopupMenuButton(
-                  icon: const Icon(Icons.more_vert, size: 20),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(maxWidth: 150),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'settings',
-                      child: Text('Manage link'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'copy',
-                      child: Text('Copy link'),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () =>
-                  context.push('/classroom/$classroomId/meet-prep'),
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-              ),
-              child: const Text('Join'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildUpcomingCard(BuildContext context) {
     return AppCard(
       child: Column(
@@ -266,10 +271,16 @@ class StreamTab extends ConsumerWidget {
     WidgetRef ref,
   ) {
     return AppCard(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
         children: [
-          const CircleAvatar(radius: 16, child: Icon(Icons.person, size: 20)),
+          const CircleAvatar(
+            radius: 18,
+            backgroundImage: NetworkImage(
+              'https://i.pravatar.cc/150?u=teacher',
+            ), // Mock avatar
+            backgroundColor: Colors.grey,
+          ),
           const SizedBox(width: 16),
           Expanded(
             child: Text(
@@ -278,9 +289,11 @@ class StreamTab extends ConsumerWidget {
                   : 'Communicate with your class',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
+                fontSize: 14,
               ),
             ),
           ),
+          const Icon(Icons.sync, color: Colors.grey, size: 20),
         ],
       ),
       onTap: () => _showPostAnnouncementDialog(context, isTeacher, ref),

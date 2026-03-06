@@ -32,19 +32,66 @@ class TeacherDashboard extends ConsumerWidget {
         children: [
           if (MediaQuery.of(context).size.width > 800)
             Container(
-              width: 250,
-              color: Theme.of(context).colorScheme.surface,
+              width: 280,
+              decoration: BoxDecoration(
+                border: Border(
+                  right: BorderSide(
+                    color: Theme.of(context).dividerColor.withOpacity(0.1),
+                  ),
+                ),
+              ),
               child: ListView(
                 children: [
-                  ListTile(
-                    leading: const Icon(Icons.dashboard),
-                    title: const Text('Classrooms'),
-                    onTap: () {},
-                    selected: true,
+                  const SizedBox(height: 12),
+                  _buildSidebarItem(context, 'Home', Icons.home_outlined, true),
+                  _buildSidebarItem(
+                    context,
+                    'Calendar',
+                    Icons.calendar_today_outlined,
+                    false,
                   ),
-                  ListTile(
-                    title: const Text('Profile'),
-                    onTap: () => context.push('/profile'),
+                  const Divider(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      'Teaching',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  _buildSidebarItem(
+                    context,
+                    'To-review',
+                    Icons.assignment_outlined,
+                    false,
+                  ),
+                  // Mock class items for UI look
+                  _buildSidebarItem(
+                    context,
+                    'Physics 101',
+                    Icons.circle,
+                    false,
+                    iconSize: 12,
+                    iconColor: Colors.blue,
+                  ),
+                  _buildSidebarItem(
+                    context,
+                    'Mathematics',
+                    Icons.circle,
+                    false,
+                    iconSize: 12,
+                    iconColor: Colors.green,
+                  ),
+                  const Divider(),
+                  _buildSidebarItem(
+                    context,
+                    'Settings',
+                    Icons.settings_outlined,
+                    false,
                   ),
                 ],
               ),
@@ -148,6 +195,41 @@ class TeacherDashboard extends ConsumerWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSidebarItem(
+    BuildContext context,
+    String title,
+    IconData icon,
+    bool selected, {
+    double iconSize = 24,
+    Color? iconColor,
+  }) {
+    return ListTile(
+      leading: Icon(
+        icon,
+        size: iconSize,
+        color:
+            iconColor ??
+            (selected ? Theme.of(context).colorScheme.primary : null),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+          fontSize: 14,
+        ),
+      ),
+      onTap: () {},
+      selected: selected,
+      dense: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.only(
+          topRight: Radius.circular(24),
+          bottomRight: Radius.circular(24),
+        ),
       ),
     );
   }

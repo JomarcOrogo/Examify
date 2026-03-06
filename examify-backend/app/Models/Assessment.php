@@ -19,6 +19,7 @@ class Assessment extends Model
         'is_published',
         'max_violations',
         'warn_at_violations',
+        'weight',
     ];
 
     protected $casts = [

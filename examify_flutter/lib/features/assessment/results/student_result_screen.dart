@@ -5,10 +5,20 @@ import '../../../shared/widgets/app_card.dart';
 
 class StudentResultScreen extends StatelessWidget {
   final String assessmentId;
-  const StudentResultScreen({super.key, required this.assessmentId});
+  final Map<String, dynamic>? result;
+
+  const StudentResultScreen({
+    super.key,
+    required this.assessmentId,
+    this.result,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final score = result?['percentage']?.toString() ?? '0';
+    final correct = result?['score']?.toString() ?? '0';
+    final total = result?['total']?.toString() ?? '0';
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Assessment Result'),
@@ -36,8 +46,8 @@ class StudentResultScreen extends StatelessWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      _buildStatScore(context, 'Score', '85%'),
-                      _buildStatScore(context, 'Correct', '17/20'),
+                      _buildStatScore(context, 'Score', '$score%'),
+                      _buildStatScore(context, 'Correct', '$correct/$total'),
                     ],
                   ),
                   const SizedBox(height: 32),

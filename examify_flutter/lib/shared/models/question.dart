@@ -1,19 +1,17 @@
 class Question {
   final int id;
   final int assessmentId;
-  final String text;
+  final String body;
   final String type; // 'mcq', 'short_answer'
-  final List<String> options;
-  final String? correctAnswer;
+  final List<Option> options;
   final int points;
 
   Question({
     required this.id,
     required this.assessmentId,
-    required this.text,
+    required this.body,
     required this.type,
     this.options = const [],
-    this.correctAnswer,
     this.points = 1,
   });
 
@@ -21,10 +19,11 @@ class Question {
     return Question(
       id: json['id'],
       assessmentId: json['assessment_id'] ?? 0,
-      text: json['text'],
+      body: json['body'] ?? json['text'] ?? '',
       type: json['type'] ?? 'mcq',
-      options: List<String>.from(json['options'] ?? []),
-      correctAnswer: json['correct_answer'],
+      options:
+          (json['options'] as List?)?.map((o) => Option.fromJson(o)).toList() ??
+          [],
       points: json['points'] ?? 1,
     );
   }
@@ -33,11 +32,33 @@ class Question {
     return {
       'id': id,
       'assessment_id': assessmentId,
-      'text': text,
+      'body': body,
       'type': type,
-      'options': options,
-      'correct_answer': correctAnswer,
+      'options': options.map((e) => e.toJson()).toList(),
       'points': points,
     };
+  }
+}
+
+class Option {
+  final int? id;
+  final String body;
+  final bool? isCorrect;
+
+  Option({this.id, required this.body, this.isCorrect});
+
+  factory Option.fromJson(dynamic json) {
+    if (json is String) {
+      return Option(body: json);
+    }
+    return Option(
+      id: json['id'],
+      body: json['body'] ?? '',
+      isCorrect: json['is_correct'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {'id': id, 'body': body, 'is_correct': isCorrect};
   }
 }

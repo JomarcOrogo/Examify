@@ -93,6 +93,27 @@ class ProctoringService extends WindowListener with WidgetsBindingObserver {
     _reportViolation('window_blur');
   }
 
+  @override
+  void onWindowResize() {
+    if (_isProctoring) {
+      _reportViolation('window_resize');
+    }
+  }
+
+  @override
+  void onWindowMaximize() {
+    if (_isProctoring) {
+      // Potentially allowed, but usually we want to stay in fullscreen
+    }
+  }
+
+  @override
+  void onWindowUnmaximize() {
+    if (_isProctoring) {
+      _reportViolation('window_unmaximize');
+    }
+  }
+
   Future<void> _lockAndroid() async {
     await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);

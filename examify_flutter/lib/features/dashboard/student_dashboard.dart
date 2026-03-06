@@ -51,36 +51,43 @@ class StudentDashboard extends ConsumerWidget {
             ),
           Expanded(
             child: classroomsAsync.when(
-              data: (classrooms) => GridView.builder(
-                padding: const EdgeInsets.all(24),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 300,
-                  childAspectRatio: 3 / 2,
-                  crossAxisSpacing: 24,
-                  mainAxisSpacing: 24,
-                ),
-                itemCount: classrooms.length,
-                itemBuilder: (context, index) {
-                  final classroom = classrooms[index];
-                  return AppCard(
-                    onTap: () => context.push('/classroom/${classroom.id}'),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          classroom.name,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Teacher: ${classroom.teacher?.name ?? 'Unknown'}',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ],
-                    ),
-                  );
-                },
+              data: (classrooms) => RefreshIndicator(
+                onRefresh: () => ref.refresh(classroomsProvider.future),
+                child: classrooms.isEmpty
+                    ? ListView(children: [_buildEmptyState(context)])
+                    : GridView.builder(
+                        padding: const EdgeInsets.all(24),
+                        gridDelegate:
+                            const SliverGridDelegateWithMaxCrossAxisExtent(
+                              maxCrossAxisExtent: 300,
+                              childAspectRatio: 3 / 2,
+                              crossAxisSpacing: 24,
+                              mainAxisSpacing: 24,
+                            ),
+                        itemCount: classrooms.length,
+                        itemBuilder: (context, index) {
+                          final classroom = classrooms[index];
+                          return AppCard(
+                            onTap: () =>
+                                context.push('/classroom/${classroom.id}'),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  classroom.name,
+                                  style: Theme.of(context).textTheme.titleLarge,
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Teacher: ${classroom.teacher?.name ?? 'Unknown'}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
               ),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, stack) => Center(child: Text('Error: $err')),
@@ -133,6 +140,36 @@ class StudentDashboard extends ConsumerWidget {
             },
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.only(top: 100),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.school_outlined,
+              size: 64,
+              color: Theme.of(context).colorScheme.outline,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No classrooms joined yet',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Join a class to get started',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.outline,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

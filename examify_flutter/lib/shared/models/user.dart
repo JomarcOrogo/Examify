@@ -5,8 +5,17 @@ class User {
   final String name;
   final String? email;
   final UserRole role;
+  final String? studentId;
+  final String? teacherId;
 
-  User({required this.id, required this.name, this.email, required this.role});
+  User({
+    required this.id,
+    required this.name,
+    this.email,
+    required this.role,
+    this.studentId,
+    this.teacherId,
+  });
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -16,6 +25,8 @@ class User {
       role: (json['role'] ?? 'student') == 'teacher'
           ? UserRole.teacher
           : UserRole.student,
+      studentId: json['student_id'],
+      teacherId: json['teacher_id'],
     );
   }
 
@@ -25,6 +36,8 @@ class User {
       'name': name,
       'email': email,
       'role': role == UserRole.teacher ? 'teacher' : 'student',
+      'student_id': studentId,
+      'teacher_id': teacherId,
     };
   }
 }

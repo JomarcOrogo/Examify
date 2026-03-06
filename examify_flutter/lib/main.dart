@@ -103,13 +103,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/assessment/:id/take',
-        builder: (context, state) =>
-            TakeAssessmentScreen(assessmentId: state.pathParameters['id']!),
+        builder: (context, state) => TakeAssessmentScreen(
+          assessmentId: state.pathParameters['id']!,
+          attemptId:
+              int.tryParse(state.uri.queryParameters['attemptId'] ?? '') ?? 0,
+        ),
       ),
       GoRoute(
         path: '/assessment/:id/result',
-        builder: (context, state) =>
-            StudentResultScreen(assessmentId: state.pathParameters['id']!),
+        builder: (context, state) => StudentResultScreen(
+          assessmentId: state.pathParameters['id']!,
+          result: state.extra as Map<String, dynamic>?,
+        ),
       ),
       GoRoute(
         path: '/assessment/:id/reports',

@@ -20,7 +20,7 @@ class AnnouncementController extends Controller
             if ($classroom->teacher_id !== $user->id)
                 abort(403);
         } else {
-            if (!$classroom->students()->where('student_id', $user->id)->exists())
+            if (!$classroom->students()->where('users.id', $user->id)->exists())
                 abort(403);
         }
 

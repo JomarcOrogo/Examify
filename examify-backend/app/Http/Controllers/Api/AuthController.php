@@ -22,11 +22,21 @@ class AuthController extends Controller
             'role' => 'required|in:teacher,student',
         ]);
 
+        $idPrefix = $validated['role'] === 'teacher' ? 'TEA-' : 'STU-';
+        $uniqueId = $idPrefix . strtoupper(Str::random(4)) . rand(1000, 9999);
+
+        // Ensure uniqueness
+        while (User::where($validated['role'] === 'teacher' ? 'teacher_id' : 'student_id', $uniqueId)->exists()) {
+            $uniqueId = $idPrefix . strtoupper(Str::random(4)) . rand(1000, 9999);
+        }
+
         $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
+            'student_id' => $validated['role'] === 'student' ? $uniqueId : null,
+            'teacher_id' => $validated['role'] === 'teacher' ? $uniqueId : null,
         ]);
 
         $expiresAt = now()->addMinutes(60);
